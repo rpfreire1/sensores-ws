@@ -1,10 +1,14 @@
 from bson import ObjectId
 from flask import Flask, jsonify, request
+from flask_cors import CORS
 from flask_pymongo import PyMongo
 
 app = Flask(__name__)
 app.config['MONGO_URI'] = 'mongodb://localhost:27017/dashboard_incendios_forestales'
 mongo = PyMongo(app)
+
+# Enable CORS
+CORS(app)
 
 @app.route('/users', methods=['GET'])
 def obtain_users():

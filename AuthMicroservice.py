@@ -2,6 +2,7 @@ from functools import wraps
 
 from bson import ObjectId
 from flask import Flask, jsonify, request, session, make_response
+from flask_cors import CORS
 from flask_pymongo import PyMongo
 from datetime import timedelta, datetime
 import secrets, jwt
@@ -10,6 +11,9 @@ app = Flask(__name__)
 app.config['MONGO_URI'] = 'mongodb://localhost:27017/dashboard_incendios_forestales'
 app.config['SECRET_KEY'] = '2KpcpS-zveJAejeOmsCIsX7G6pMbTOgTojCtymkYhCW8pWzH-gYEJW5jxyxvoMu82_6guuD_e16GU56IQa1ylQ' ##secrets.token_urlsafe(64)
 mongo = PyMongo(app)
+
+# Enable CORS
+CORS(app)
 
 
 def token_required(func):

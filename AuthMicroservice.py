@@ -8,7 +8,7 @@ import secrets, jwt
 
 app = Flask(__name__)
 app.config['MONGO_URI'] = 'mongodb://localhost:27017/dashboard_incendios_forestales'
-app.config['SECRET_KEY'] = secrets.token_urlsafe(64)
+app.config['SECRET_KEY'] = '2KpcpS-zveJAejeOmsCIsX7G6pMbTOgTojCtymkYhCW8pWzH-gYEJW5jxyxvoMu82_6guuD_e16GU56IQa1ylQ' ##secrets.token_urlsafe(64)
 mongo = PyMongo(app)
 
 
@@ -20,9 +20,14 @@ def token_required(func):
             return jsonify({'message': 'Token is missing'}), 403
         try:
             payload = jwt.decode(token, app.config['SECRET_KEY'])
-            session['user_id'] = payload['user_id']
-        except:
+            user_id = payload.get('user_id')
+            if not user_id:
+                raise jwt.InvalidTokenError()
+        except (jwt.DecodeError, jwt.InvalidTokenError):
             return jsonify({'message': 'Token is invalid'}), 403
+
+        kwargs['user_id'] = user_id
+        return func(*args, **kwargs)
 
     return decorated
 
@@ -43,11 +48,11 @@ def login():
         return make_response('Could not verify', 401, {'WWW-Authenticate': 'Basic realm="Authentication Failure!"'})
 
 
-@app.route('/admin_only', Methods=['GET'])
+@app.route('/admin_only', methods=['GET'])
 @token_required
 def admin_only():
     users = mongo.db.users
-    user = users.find_one({'_id': ObjectId(session['user_id'])})
+    user = users.find_one({'_id': ObjectId(request.args.get('user_id'))})
     if user and user['role'] == 'admin':
         return jsonify({'message': 'Hello admin'}), 200
     else:

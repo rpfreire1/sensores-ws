@@ -23,11 +23,11 @@ def token_required(func):
         if not token:
             return jsonify({'message': 'Token is missing'}), 403
         try:
-            payload = jwt.decode(token, app.config['SECRET_KEY'])
-            user_id = payload.get('user_id')
+            payload = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+            user_id = payload['user_id']
             if not user_id:
-                raise jwt.InvalidTokenError()
-        except (jwt.DecodeError, jwt.InvalidTokenError):
+                return jsonify({'message': 'Token is not assigned to admin'}), 403
+        except(jwt.ExpiredSignatureError, jwt.InvalidTokenError):
             return jsonify({'message': 'Token is invalid'}), 403
 
         kwargs['user_id'] = user_id
@@ -54,10 +54,10 @@ def login():
 
 @app.route('/admin_only', methods=['GET'])
 @token_required
-def admin_only():
+def admin_only(user_id):
     users = mongo.db.users
-    user = users.find_one({'_id': ObjectId(request.args.get('user_id'))})
-    if user and user['role'] == 'admin':
+    user = users.find_one({'_id': ObjectId(user_id)})
+    if user and user['role'] == 'Admin':
         return jsonify({'message': 'Hello admin'}), 200
     else:
         return jsonify({'message': 'You are not an admin'}), 401
